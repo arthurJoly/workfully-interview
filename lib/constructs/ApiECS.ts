@@ -1,8 +1,7 @@
-import { Construct } from 'constructs';
-import { aws_ecs as ecs  } from 'aws-cdk-lib';
-import { aws_ec2 as ec2 } from 'aws-cdk-lib';
-import { aws_rds as rds } from 'aws-cdk-lib';
-import {PortMap} from "aws-cdk-lib/aws-ecs";
+import {Construct} from 'constructs';
+import {aws_ec2 as ec2, aws_ecs as ecs} from 'aws-cdk-lib';
+import {LogDriver, Protocol} from "aws-cdk-lib/aws-ecs";
+import {LogGroup, RetentionDays} from "aws-cdk-lib/aws-logs";
 
 export interface CustomProps {
     // List all the properties
@@ -31,7 +30,8 @@ export class ApiECS extends Construct {
             //TODO: change to fromEcrRepository and pass the registry as props
             image: ecs.ContainerImage.fromRegistry("amazon/amazon-ecs-sample"),
             memoryLimitMiB: 512,
-            portMappings: [{containerPort: 8080}]
+            portMappings: [{containerPort: 80, protocol: Protocol.TCP}],
+            logging: LogDriver.awsLogs({streamPrefix: "task", logGroup: new LogGroup(this, "taskLogGroup", {retention: RetentionDays.ONE_DAY})})
         });
 
 

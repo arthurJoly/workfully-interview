@@ -1,10 +1,10 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { ApiECS } from "./constructs/ApiECS";
-import { Vpc } from "aws-cdk-lib/aws-ec2";
-import {Integration, IntegrationType, RestApi, VpcLink, ConnectionType} from "aws-cdk-lib/aws-apigateway";
-import {NetworkLoadBalancer, NetworkTargetGroup} from "aws-cdk-lib/aws-elasticloadbalancingv2";
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+import { SubnetType, Vpc } from "aws-cdk-lib/aws-ec2";
+import {ApplicationLoadBalancer, ApplicationTargetGroup } from "aws-cdk-lib/aws-elasticloadbalancingv2";
+import { HttpApi, HttpMethod } from 'aws-cdk-lib/aws-apigatewayv2';
+import { HttpAlbIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 
 export class WorkfullyStack extends cdk.Stack {
 
@@ -13,33 +13,29 @@ export class WorkfullyStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    var vpc = new Vpc(this, "myVpc");
-
+    var vpc = new Vpc(this, "myVpc", {
+      restrictDefaultSecurityGroup: false
+    });
+    
     //TODO: add target group and listeners and rules
-    var nlb = new NetworkLoadBalancer(this, 'NLB', {
+    var alb = new ApplicationLoadBalancer(this, 'ALB', {
       vpc,
     });
-    var targetGroup = new NetworkTargetGroup(this, "default", {port: 80, vpc: vpc})
-    var listener = nlb.addListener("default", {port: 80, defaultTargetGroups: [targetGroup]})
+    var targetGroup = new ApplicationTargetGroup(this, "hello", {port: 80, vpc: vpc})
+    var listener = alb.addListener("default", {port: 80, defaultTargetGroups: [targetGroup]})
+    
 
+    var apiGateway = new HttpApi(this, "apiName");
 
-    //TODO: vpc link http api instead of rest api
-    var link = new VpcLink(this, "apiLink", {
-      targets: [nlb],
+    var link = apiGateway.addVpcLink({vpcLinkName:"apiLink", vpc: vpc })
+
+    var integration = new HttpAlbIntegration("integration", listener, {vpcLink: link} );
+
+    apiGateway.addRoutes({
+      path: '/{proxy+}',
+      methods: [ HttpMethod.ANY ],
+      integration: integration,
     });
-    var integration = new Integration({
-      type: IntegrationType.HTTP_PROXY,
-      integrationHttpMethod: 'ANY',
-      options: {
-        connectionType: ConnectionType.VPC_LINK,
-        vpcLink: link,
-      },
-    });
-
-    var apiGateway = new RestApi(this, "apiName", { defaultIntegration: integration })
-    apiGateway.root.addMethod('ANY');
-    apiGateway.root.addResource('test');
-
 
     var ecs = new ApiECS(this, "testECS", {
       name: "test",
