@@ -1,10 +1,11 @@
 import { Construct } from 'constructs';
 import { Cluster, FargateService, FargateTaskDefinition, LogDriver, Protocol, RepositoryImage } from "aws-cdk-lib/aws-ecs";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
-import { InstanceType, Vpc } from "aws-cdk-lib/aws-ec2";
+import { InstanceType, NetworkAcl, Port, Vpc } from "aws-cdk-lib/aws-ec2";
 import {ApplicationListener, ApplicationLoadBalancer, ApplicationTargetGroup, IApplicationLoadBalancerTarget } from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import { HttpApi, HttpMethod } from 'aws-cdk-lib/aws-apigatewayv2';
 import { HttpAlbIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
+import { DatabaseInstance } from 'aws-cdk-lib/aws-rds';
 
 export interface CustomProps {
     name: string;
@@ -33,10 +34,11 @@ export class ApiECS extends Construct {
 
     private createVpc(name: string){
         this.vpc = new Vpc(this, `vpc_${name}`, {
-            //TODO: why do we need to put false?
+            //TODO: update inboud and outbout rules
             restrictDefaultSecurityGroup: false
         });
     }
+
 
     private createEcsCluster(name: string, repositoryImage: RepositoryImage){
         //TODO: give possibility to reuse cluster for different API
@@ -82,9 +84,7 @@ export class ApiECS extends Construct {
         });
     }
 
-    public grantDBWrite() {
-    }
-    public grantDBRead() {
-
+    public grantDbAccess(db: DatabaseInstance, port: number) {
+        db.connections.allowFrom(this.ecsService, Port.tcp(port))
     }
 }
