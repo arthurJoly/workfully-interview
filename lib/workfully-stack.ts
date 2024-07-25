@@ -12,7 +12,12 @@ export class WorkfullyStack extends cdk.Stack {
 
     var apiEcs = new ApiECS(this, "WorkfullyEcsApi", {
       name: "workfully",
-      repositoryImage: ContainerImage.fromRegistry("amazon/amazon-ecs-sample")
+      repositoryImage: ContainerImage.fromRegistry("amazon/amazon-ecs-sample"),
+      cpu: 1,
+      memoryLimit: 512,
+      instanceType: "t2.nano",
+      minCapacity: 1,
+      maxCapacity: 2
     })
 
     const credsSecretName = `/rds/creds/maria-01`.toLowerCase()
@@ -38,8 +43,6 @@ export class WorkfullyStack extends cdk.Stack {
       }),
       instanceType: InstanceType.of(InstanceClass.T4G, InstanceSize.SMALL)
     })
-
- 
 
     apiEcs.grantDbAccess(dbServer, 3306);
   }
