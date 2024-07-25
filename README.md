@@ -1,25 +1,12 @@
 # Welcome to your CDK TypeScript project
 
-This is a blank project for CDK development with TypeScript.
-
 The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
+## Prerequisite
 * brew install node
 * npm install -g typescript
 * npm install -g aws-cdk
 
-https://docs.aws.amazon.com/cdk/v2/guide/work-with-cdk-typescript.html
-https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html
-
-https://docs.aws.amazon.com/cdk/v2/guide/hello_world.html
-https://docs.aws.amazon.com/cdk/v2/guide/configure-env.html#configure-env-how
-https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping-env.html#bootstrapping-howto
-
-First deployment
-
-UPDATE APP SO ACCOUNT NUMBER NOT HARD CODED
-
-cdk bootstrap
 ## Useful commands
 
 * `npm run build`   compile typescript to js
@@ -28,3 +15,15 @@ cdk bootstrap
 * `npx cdk deploy`  deploy this stack to your default AWS account/region
 * `npx cdk diff`    compare deployed stack with current state
 * `npx cdk synth`   emits the synthesized CloudFormation template
+
+## Deploy
+
+* Update AWS account number in `/bin/workfully.ts`
+* npm run build
+* cdk synth
+* cdk bootstrap (only First deployment)
+* cdk deploy WorkfullyStack
+
+## Explanation
+- The CDK construct `ApiECS` should be part of a library that could be used by different consumers
+- The `ApiECS` construct exposes some of the components that composed it so teams can use them to build other constructs
