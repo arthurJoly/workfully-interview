@@ -46,7 +46,8 @@ export class ApiECS extends Construct {
     }
 
     private createVpc(name: string){
-        this.vpc = new Vpc(this, `vpc_${name}`);
+        //TODO : restrict VPC
+        this.vpc = new Vpc(this, `vpc_${name}`, {restrictDefaultSecurityGroup: false});
     }
 
     private createEcsCluster(name: string, props: ApiECSProps){
@@ -57,9 +58,7 @@ export class ApiECS extends Construct {
             minCapacity: props.minCapacity,
             maxCapacity: props.maxCapacity
         });
-
         this.ecsCluster.connections.allowFromAnyIpv4(Port.HTTP);
-        this.ecsCluster.connections.allowFromAnyIpv4(Port.HTTPS);
 
         const taskrole = new Role(this, "ecsTaskExecutionRole", {
             assumedBy: new ServicePrincipal("ecs-tasks.amazonaws.com"),
@@ -73,7 +72,6 @@ export class ApiECS extends Construct {
 
         this.fargateTaskDefinition = new FargateTaskDefinition(this, `fargate_task_${name}`, {taskRole: taskrole});
 
-
         this.fargateTaskDefinition.addContainer(`container_${name}`, {
             image: props.repositoryImage,
             memoryLimitMiB: props.memoryLimit,
@@ -86,10 +84,7 @@ export class ApiECS extends Construct {
             cluster : this.ecsCluster,
             taskDefinition: this.fargateTaskDefinition
         });
-
         this.ecsService.connections.allowFromAnyIpv4(Port.HTTP);
-        this.ecsService.connections.allowFromAnyIpv4(Port.HTTPS);
-
     }
 
     private createLoadBalancer(name: string){
@@ -102,9 +97,7 @@ export class ApiECS extends Construct {
         this.applicationListener.addTargets(`default_target_${name}`, {port: 80, targets: [this.ecsService]})
 
         alb.connections.allowFromAnyIpv4(Port.HTTP);
-        alb.connections.allowFromAnyIpv4(Port.HTTPS);
         alb.connections.allowToAnyIpv4(Port.HTTP)
-        alb.connections.allowToAnyIpv4(Port.HTTPS);
     }
 
     private createApiGateway(name: string){
